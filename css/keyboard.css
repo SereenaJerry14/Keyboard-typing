@@ -1,0 +1,159 @@
+/* Mechanical Keyboard 3D Aesthetics & Keycap Layout */
+
+.mech-keyboard {
+    background: var(--kb-case-bg);
+    border: 2px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    box-shadow: var(--shadow-subtle);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 980px;
+    margin: 0 auto;
+    transition: background 0.3s;
+}
+
+.kb-row {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    width: 100%;
+}
+
+/* Base Keycap */
+.kb-key {
+    background: linear-gradient(180deg, var(--kb-key-bg-top) 0%, var(--kb-key-bg-bot) 100%);
+    border: 1px solid var(--border-subtle);
+    border-bottom: 3px solid var(--kb-key-border-bot);
+    border-radius: 8px;
+    height: 48px;
+    min-width: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 6px;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: default;
+    transition: transform 0.08s ease-out, border-color 0.15s, box-shadow 0.15s, background 0.1s;
+    overflow: hidden;
+}
+
+/* Keycap Proportional Widths */
+.kb-key-1u { flex: 1; max-width: 58px; }
+.kb-key-1_25u { flex: 1.25; max-width: 72px; }
+.kb-key-1_5u { flex: 1.5; max-width: 86px; }
+.kb-key-1_75u { flex: 1.75; max-width: 102px; }
+.kb-key-2u { flex: 2; max-width: 116px; }
+.kb-key-2_25u { flex: 2.25; max-width: 130px; }
+.kb-key-2_75u { flex: 2.75; max-width: 160px; }
+.kb-key-6_5u { flex: 6.5; max-width: 380px; }
+
+/* Finger Color Accent Stripe */
+.key-accent {
+    width: 100%;
+    height: 3px;
+    border-radius: 2px;
+    opacity: 0.85;
+    transition: opacity 0.2s, height 0.2s;
+}
+
+/* Key Labels */
+.key-cap-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.main-label {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--kb-text);
+    line-height: 1;
+}
+
+.shift-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-muted);
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+/* Tactile Bump for F and J Keys */
+.has-bump {
+    position: relative;
+}
+
+.tactile-bump {
+    position: absolute;
+    bottom: 5px;
+    width: 12px;
+    height: 2px;
+    background: var(--color-accent);
+    border-radius: 2px;
+    box-shadow: 0 0 6px var(--color-accent);
+}
+
+/* Target Key Highlighting & Pulse */
+.kb-key.is-target {
+    border-color: var(--color-accent);
+    box-shadow: 
+        0 0 16px var(--shadow-glow),
+        inset 0 0 10px rgba(2, 132, 199, 0.15);
+    transform: translateY(-2px);
+}
+
+.kb-key.is-target .key-accent {
+    opacity: 1;
+    height: 4px;
+    box-shadow: 0 0 8px currentColor;
+}
+
+.kb-key.is-target .main-label {
+    color: var(--color-accent);
+    font-weight: 900;
+}
+
+@keyframes targetPulse {
+    0% { transform: translateY(-2px) scale(1); }
+    50% { transform: translateY(-3px) scale(1.04); }
+    100% { transform: translateY(-2px) scale(1); }
+}
+
+.kb-key.target-pulse {
+    animation: targetPulse 1.2s infinite ease-in-out;
+}
+
+/* Keystroke Feedback (Physical Downward Press) */
+.kb-key.key-pressed {
+    transform: translateY(3px) !important;
+    border-bottom-width: 1px !important;
+    background: linear-gradient(180deg, #2a3950 0%, #1c2638 100%) !important;
+    box-shadow: 
+        0 1px 2px rgba(0, 0, 0, 0.6),
+        inset 0 0 12px rgba(0, 245, 212, 0.4) !important;
+}
+
+/* Error Key Feedback */
+.kb-key.key-error {
+    border-color: var(--color-error) !important;
+    background: rgba(255, 51, 102, 0.2) !important;
+    box-shadow: 0 0 15px rgba(255, 51, 102, 0.6) !important;
+    animation: keyErrorShake 0.25s ease-in-out;
+}
+
+@keyframes keyErrorShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+}

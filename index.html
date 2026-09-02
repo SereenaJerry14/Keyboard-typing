@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FingerFlow - Interactive 10-Finger Touch Typing Game</title>
+    <meta name="description" content="Master 10-finger touch typing with interactive animated hand guides, visual mechanical keyboard, and gamified arcade training.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/keyboard.css">
+    <link rel="stylesheet" href="css/hands.css">
+    <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+    <!-- Background Particle Canvas -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+        <div class="brand-area">
+            <span class="logo-icon">⌨️</span>
+            <h1 class="app-title">FingerFlow</h1>
+            <span class="app-badge">Touch Typing Dojo</span>
+        </div>
+
+        <nav class="nav-tabs-wrapper">
+            <button class="nav-tab active" data-mode="academy" id="nav-academy">
+                <span>🎓</span> Academy
+            </button>
+            <button class="nav-tab" data-mode="shorthand" id="nav-shorthand">
+                <span>✍️</span> Shorthand Lab
+            </button>
+            <button class="nav-tab" data-mode="arcade" id="nav-arcade">
+                <span>☄️</span> Meteor Blitz
+            </button>
+            <button class="nav-tab" data-mode="speedtest" id="nav-speedtest">
+                <span>⚡</span> Speed Sprint
+            </button>
+            <button class="nav-tab" data-mode="diagnostics" id="nav-diagnostics">
+                <span>📊</span> Finger Clinic
+            </button>
+        </nav>
+
+        <div class="header-controls">
+            <button id="theme-toggle-btn" class="theme-toggle-btn" title="Toggle Light / Dark Mode">
+                <span id="theme-icon">🌙</span> <span id="theme-text">Dark</span>
+            </button>
+            <div class="control-group">
+                <span>🔊 Switch:</span>
+                <select id="switch-type-select" class="switch-select" aria-label="Switch Sound Type">
+                    <option value="blue">Cherry Blue (Clicky)</option>
+                    <option value="brown">Cherry Brown (Thoccy)</option>
+                    <option value="red">Cherry Red (Linear)</option>
+                    <option value="typewriter">Vintage Typewriter</option>
+                    <option value="mute">Muted</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <input type="range" id="volume-slider" class="vol-slider" min="0" max="1" step="0.05" value="0.5" aria-label="Volume">
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Game App Body -->
+    <main class="app-body">
+        <!-- Real-time HUD Metrics Bar -->
+        <section class="hud-bar" aria-label="Typing Telemetry">
+            <div class="hud-card">
+                <span class="hud-card-label">Speed</span>
+                <span class="hud-card-value" id="stat-wpm">0 <small style="font-size: 14px; color: var(--text-muted);">WPM</small></span>
+            </div>
+            <div class="hud-card">
+                <span class="hud-card-label">Accuracy</span>
+                <span class="hud-card-value" id="stat-accuracy">100%</span>
+            </div>
+            <div class="hud-card">
+                <span class="hud-card-label">Combo Streak</span>
+                <span class="hud-card-value" id="stat-streak" style="color: var(--color-gold);">0</span>
+            </div>
+            <div class="hud-card progress-hud-card">
+                <span class="hud-card-label">Lesson Progress</span>
+                <div class="progress-track">
+                    <div class="progress-fill" id="stat-progress"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Active Target Finger Instruction Banner -->
+        <div id="finger-hint-banner">
+            <span class="hint-idle">Press any key to begin...</span>
+        </div>
+
+        <!-- ==============================================
+             MODE 1: ACADEMY MODE VIEW
+             ============================================== -->
+        <div class="mode-view" id="view-academy">
+            <div class="typing-arena-card">
+                <div class="arena-top-row">
+                    <div class="lesson-info-box">
+                        <span class="active-lesson-heading" id="active-lesson-title">Loading Lesson...</span>
+                        <span class="active-lesson-sub" id="active-lesson-desc">Position your fingers on the home row.</span>
+                    </div>
+                    <button class="btn btn-secondary" id="btn-restart-lesson" title="Restart Lesson">
+                        ↺ Reset
+                    </button>
+                </div>
+                <div class="typing-text-wrapper" id="typing-text-display"></div>
+            </div>
+
+            <!-- Curriculum Drawer / Stages Grid -->
+            <div class="curriculum-section">
+                <div class="curriculum-header">
+                    <span>📚</span> Finger Training Curriculum
+                </div>
+                <div id="academy-curriculum-list"></div>
+            </div>
+        </div>
+
+        <!-- ==============================================
+             MODE: SHORTHAND LAB & SPEED CONTRACTIONS VIEW
+             ============================================== -->
+        <div class="mode-view" id="view-shorthand" style="display: none;">
+            <div class="typing-arena-card shorthand-arena-card">
+                <div class="arena-top-row">
+                    <div class="lesson-info-box">
+                        <div class="shorthand-badge-title">
+                            <span class="active-lesson-heading" id="shorthand-title">Shorthand & Speed Drill</span>
+                            <span class="shorthand-code-pill" id="shorthand-active-pill">ASAP</span>
+                        </div>
+                        <span class="active-lesson-sub" id="shorthand-desc">Expansion: <em>As Soon As Possible</em></span>
+                    </div>
+                    <div class="shorthand-header-actions">
+                        <button class="btn btn-secondary" id="btn-shorthand-random" title="Random Shorthand Drill">🎲 Random Drill</button>
+                        <button class="btn btn-secondary" id="btn-shorthand-reset" title="Restart Current Drill">↺ Reset</button>
+                        <button class="btn btn-primary" id="btn-shorthand-next" title="Next Shorthand Drill">Next Drill ➔</button>
+                    </div>
+                </div>
+                <div class="typing-text-wrapper" id="typing-text-display-shorthand"></div>
+            </div>
+
+            <!-- Shorthand Dictionary / Cheat-Sheet Explorer -->
+            <div class="shorthand-lab-section">
+                <div class="shorthand-lab-header">
+                    <div class="shorthand-lab-title">
+                        <span>⚡</span> Shorthand & Speed Contractions Dictionary
+                    </div>
+                    <!-- Category Filter Pills -->
+                    <div class="shorthand-category-pills" id="shorthand-categories-bar"></div>
+                </div>
+                <div class="shorthand-dictionary-grid" id="shorthand-dict-grid"></div>
+            </div>
+        </div>
+
+        <!-- ==============================================
+             MODE 2: ARCADE DEFENSE MODE VIEW
+             ============================================== -->
+        <div class="mode-view" id="view-arcade" style="display: none;">
+            <div class="arcade-container">
+                <div class="arcade-hud-row" id="arcade-hud"></div>
+                <div class="arcade-arena" id="arcade-arena">
+                    <div class="danger-laser-line"></div>
+                </div>
+                <div class="arcade-overlay" id="arcade-overlay">
+                    <h2 style="font-size: 28px; font-weight: 800; color: #fff;">☄️ Meteor Blitz Defense</h2>
+                    <p style="color: var(--text-secondary); max-width: 440px; text-align: center;">
+                        Destroy incoming meteors before they breach your shield! Use the exact color-coded finger indicated for each letter.
+                    </p>
+                    <button class="btn btn-primary" id="btn-start-arcade" style="font-size: 16px; padding: 12px 32px;">
+                        Launch Defense
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==============================================
+             MODE 3: SPEED SPRINT / DRILL VIEW
+             ============================================== -->
+        <div class="mode-view" id="view-speedtest" style="display: none;">
+            <div class="typing-arena-card">
+                <div class="arena-top-row">
+                    <div class="lesson-info-box">
+                        <span class="active-lesson-heading" id="speedtest-title">Speed Sprint</span>
+                        <span class="active-lesson-sub">Type at peak velocity while keeping your gaze strictly on the screen.</span>
+                    </div>
+                    <div class="time-pills-row">
+                        <button class="time-pill active" data-seconds="30">30s</button>
+                        <button class="time-pill" data-seconds="60">60s</button>
+                    </div>
+                </div>
+                <div class="typing-text-wrapper" id="typing-text-display-speed"></div>
+            </div>
+        </div>
+
+        <!-- ==============================================
+             MODE 4: FINGER DIAGNOSTICS CLINIC VIEW
+             ============================================== -->
+        <div class="mode-view" id="view-diagnostics" style="display: none;">
+            <div class="diagnostics-container">
+                <div id="diagnostics-summary-card"></div>
+                <div class="finger-grid" id="diagnostics-finger-grid"></div>
+                <div class="diag-actions-row">
+                    <button class="btn btn-secondary" id="btn-reset-diagnostics">Reset Telemetry</button>
+                    <button class="btn btn-primary" id="btn-train-weakest">🎯 Train Weakest Finger</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==============================================
+             CORE INTERACTIVE VISUAL HARDWARE
+             ============================================== -->
+        <!-- Mechanical Keyboard 3D Visualizer -->
+        <section id="keyboard-container" aria-label="Visual Mechanical Keyboard"></section>
+
+        <!-- SVG Anatomical Hands & Finger Guidance -->
+        <section id="hands-container" aria-label="Anatomical Hands Guide"></section>
+    </main>
+
+    <!-- Lesson Completion Modal -->
+    <div class="modal-backdrop" id="completion-modal">
+        <div class="modal-card">
+            <h2 style="font-size: 24px; font-weight: 800; color: #fff;">Lesson Complete!</h2>
+            <div class="modal-stars-row" id="modal-stars"></div>
+            <div class="modal-stats-grid">
+                <div class="modal-stat">
+                    <div class="modal-stat-val" id="modal-wpm">0 WPM</div>
+                    <div class="modal-stat-lbl">Speed</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-val" id="modal-acc">100%</div>
+                    <div class="modal-stat-lbl">Accuracy</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-val" id="modal-streak">0</div>
+                    <div class="modal-stat-lbl">Max Streak</div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="modal-btn-retry">Retry Lesson</button>
+                <button class="btn btn-primary" id="modal-btn-next">Next Lesson ➔</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Arcade Game Over Modal -->
+    <div class="modal-backdrop" id="arcade-gameover-modal">
+        <div class="modal-card">
+            <h2 style="font-size: 24px; font-weight: 800; color: var(--color-error);">Shield Depleted!</h2>
+            <p style="color: var(--text-secondary); margin-top: 6px;">Meteors breached the defense perimeter.</p>
+            <div class="modal-stats-grid">
+                <div class="modal-stat">
+                    <div class="modal-stat-val" id="arcade-modal-score">0</div>
+                    <div class="modal-stat-lbl">Score</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-val" id="arcade-modal-highscore">0</div>
+                    <div class="modal-stat-lbl">High Score</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-val" id="arcade-modal-wave">1</div>
+                    <div class="modal-stat-lbl">Wave</div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" id="arcade-modal-btn-retry">Deploy Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/bundle.js"></script>
+</body>
+</html>
