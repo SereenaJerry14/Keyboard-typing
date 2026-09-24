@@ -29,7 +29,7 @@ export class TypingEngine {
 
     loadText(text) {
         this.reset();
-        this.targetText = text.trim();
+        this.targetText = (text || '').replace(/\r\n/g, '\n').trim();
         this.charStates = new Array(this.targetText.length).fill('pending');
         this.callbacks.onCharChange(this.getCurrentChar(), this.getCurrentFinger());
         this.updateStats();
@@ -94,11 +94,12 @@ export class TypingEngine {
         if (!targetChar) return false;
 
         const targetFinger = getFingerForKey(targetChar);
-        const isSpace = targetChar === ' ';
+        const isSpace = targetChar === ' ' || targetChar === '\n';
+        const isMatch = (pressedKey === targetChar) || (targetChar === '\n' && (pressedKey === 'Enter' || pressedKey === '\n'));
 
         this.totalKeystrokes++;
 
-        if (pressedKey === targetChar) {
+        if (isMatch) {
             // Correct key!
             this.charStates[this.currentIndex] = 'correct';
             this.correctKeystrokes++;

@@ -1,10 +1,11 @@
-import { FINGERS, getFingerForKey } from '../config/finger_map.js';
+import { FINGERS, getFingerForKey, getShiftRequirement } from '../config/finger_map.js';
 
 export class HandsUI {
     constructor(containerElement, hintBannerElement) {
         this.container = containerElement;
         this.hintBanner = hintBannerElement;
         this.activeFingerId = null;
+        this.activeShiftFingerId = null;
         this.fingerNodes = new Map();
         this.render();
     }
@@ -172,6 +173,12 @@ export class HandsUI {
         if (this.activeFingerId) {
             const prevEl = this.fingerNodes.get(this.activeFingerId);
             if (prevEl) prevEl.classList.remove('active-finger', 'pulse-glow');
+            this.activeFingerId = null;
+        }
+        if (this.activeShiftFingerId) {
+            const prevShiftEl = this.fingerNodes.get(this.activeShiftFingerId);
+            if (prevShiftEl) prevShiftEl.classList.remove('active-shift-finger', 'pulse-glow');
+            this.activeShiftFingerId = null;
         }
 
         if (!char) {
@@ -188,37 +195,71 @@ export class HandsUI {
             targetEl.classList.add('active-finger', 'pulse-glow');
         }
 
+        // Check if Shift is required
+        const shiftReq = getShiftRequirement(char);
+        if (shiftReq && shiftReq.shiftFinger) {
+            this.activeShiftFingerId = shiftReq.shiftFinger.id;
+            const shiftFingerEl = this.fingerNodes.get(shiftReq.shiftFinger.id);
+            if (shiftFingerEl) {
+                shiftFingerEl.classList.add('active-shift-finger', 'pulse-glow');
+            }
+        }
+
         // Update instruction banner
         if (this.hintBanner) {
-            const displayChar = char === ' ' ? 'SPACEBAR' : char;
+            let displayChar = char;
+            if (char === ' ') displayChar = 'SPACEBAR';
+            else if (char === '\n') displayChar = 'ENTER ↵';
+
             const reachDesc = this.getReachDescription(char, finger);
-            this.hintBanner.innerHTML = `
-                <div class="finger-instruction-badge" style="border-color: ${finger.color}">
-                    <span class="finger-dot" style="background: ${finger.color}"></span>
-                    <span class="finger-name-label" style="color: ${finger.color}">${finger.name}</span>
-                    <span class="finger-arrow-sep">➔</span>
-                    <span class="finger-target-key">Press <strong class="key-badge">${displayChar}</strong></span>
-                    <span class="finger-reach-info">${reachDesc}</span>
-                </div>
-            `;
+
+            if (shiftReq && shiftReq.shiftFinger) {
+                this.hintBanner.innerHTML = `
+                    <div class="finger-instruction-badge" style="border-color: ${finger.color}">
+                        <span class="finger-dot" style="background: ${shiftReq.shiftFinger.color}"></span>
+                        <span class="finger-name-label" style="color: ${shiftReq.shiftFinger.color}">Hold ${shiftReq.shiftFinger.name} (Shift)</span>
+                        <span class="finger-arrow-sep">+</span>
+                        <span class="finger-dot" style="background: ${finger.color}"></span>
+                        <span class="finger-name-label" style="color: ${finger.color}">${finger.name}</span>
+                        <span class="finger-arrow-sep">➔</span>
+                        <span class="finger-target-key">Type <strong class="key-badge">${displayChar}</strong></span>
+                        <span class="finger-reach-info">${reachDesc}</span>
+                    </div>
+                `;
+            } else {
+                this.hintBanner.innerHTML = `
+                    <div class="finger-instruction-badge" style="border-color: ${finger.color}">
+                        <span class="finger-dot" style="background: ${finger.color}"></span>
+                        <span class="finger-name-label" style="color: ${finger.color}">${finger.name}</span>
+                        <span class="finger-arrow-sep">➔</span>
+                        <span class="finger-target-key">Press <strong class="key-badge">${displayChar}</strong></span>
+                        <span class="finger-reach-info">${reachDesc}</span>
+                    </div>
+                `;
+            }
         }
     }
 
     getReachDescription(char, finger) {
         if (char === ' ') return '(Resting position on Spacebar)';
+        if (char === '\n') return '(Right Pinky reaches to Enter ↵)';
         const home = finger.homeKey;
         if (char.toLowerCase() === home.toLowerCase()) {
             return '(Home row anchor position)';
         }
 
-        const topRow = 'qwertyuiop1234567890';
-        const bottomRow = 'zxcvbnm,./';
+        const topRow = 'qwertyuiop1234567890~!@#$%^&*()';
+        const bottomRow = 'zxcvbnm,./<>?';
+        const bracketPinky = '{}[];:\'"\\|-_=+';
 
         const lower = char.toLowerCase();
-        if (topRow.includes(lower)) {
+        if (bracketPinky.includes(char)) {
+            return '(Pinky stretch on bracket/symbol row)';
+        }
+        if (topRow.includes(lower) || topRow.includes(char)) {
             return '(Reach UP from home row)';
         }
-        if (bottomRow.includes(lower)) {
+        if (bottomRow.includes(lower) || bottomRow.includes(char)) {
             return '(Reach DOWN from home row)';
         }
         if (lower === 'g' || lower === 'h') {

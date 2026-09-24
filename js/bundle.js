@@ -39,7 +39,7 @@
         // Right Pinky
         '0': 'RP', ')': 'RP', '-': 'RP', '_': 'RP', '=': 'RP', '+': 'RP', 'p': 'RP', 'P': 'RP',
         '[': 'RP', '{': 'RP', ']': 'RP', '}': 'RP', '\\': 'RP', '|': 'RP', ';': 'RP', ':': 'RP',
-        "'": 'RP', '"': 'RP', '/': 'RP', '?': 'RP', 'Enter': 'RP', 'Backspace': 'RP', 'ShiftRight': 'RP'
+        "'": 'RP', '"': 'RP', '/': 'RP', '?': 'RP', 'Enter': 'RP', '\n': 'RP', 'Backspace': 'RP', 'ShiftRight': 'RP'
     };
 
     const KEYBOARD_LAYOUT = [
@@ -123,6 +123,27 @@
             return FINGERS[KEY_FINGER_MAP[lower]] || null;
         }
         return null;
+    }
+
+    function getShiftRequirement(char) {
+        if (!char) return null;
+        const isUpperLetter = /^[A-Z]$/.test(char);
+        const shiftSymbols = '~!@#$%^&*()_+{}|:"<>?';
+        const requiresShift = isUpperLetter || shiftSymbols.includes(char);
+
+        if (!requiresShift) return null;
+
+        const finger = getFingerForKey(char);
+        if (!finger) return null;
+
+        const shiftCode = finger.hand === 'left' ? 'ShiftRight' : 'ShiftLeft';
+        const shiftFinger = finger.hand === 'left' ? FINGERS['RP'] : FINGERS['LP'];
+
+        return {
+            requiresShift: true,
+            shiftCode,
+            shiftFinger
+        };
     }
 
     // 2. CONFIG: LESSONS
@@ -455,6 +476,241 @@
         "The keyboard is the instrument of the digital craftsman. Play it with precision and grace.",
         "Speed will come automatically when your accuracy and muscle memory are flawless.",
         "Do not look down at the keys. Trust your fingers and keep your eyes on the screen."
+    ];
+
+    const CODER_CATEGORIES = [
+        { id: 'all', name: 'All Snippets', icon: '💻' },
+        { id: 'symbols', name: 'Symbols & Brackets', icon: '🔣' },
+        { id: 'javascript', name: 'JavaScript / TS', icon: '📜' },
+        { id: 'python', name: 'Python', icon: '🐍' },
+        { id: 'cpp_java', name: 'C++ & Java', icon: '⚡' },
+        { id: 'html_css', name: 'HTML & CSS', icon: '🌐' },
+        { id: 'sql', name: 'SQL Queries', icon: '🗄️' },
+        { id: 'terminal', name: 'Git & Terminal', icon: '🖥️' },
+        { id: 'casing', name: 'Variable Casing', icon: '🐫' },
+    ];
+
+    const CODER_SNIPPETS = [
+        {
+            id: 'sym-01',
+            title: 'Equality, Logic & Nullish Operators',
+            category: 'symbols',
+            filename: 'operators.js',
+            lang: 'javascript',
+            difficulty: 'Easy',
+            description: 'Build fast muscle memory for triple equals, logic chords, and nullish coalescing.',
+            text: 'if (data !== null && count >= 0 || isReady === true) {\n  const value = result ?? fallback;\n  const isMatch = (a === b) && (x <= y);\n}'
+        },
+        {
+            id: 'sym-02',
+            title: 'Bracket Pairs & Nested Braces',
+            category: 'symbols',
+            filename: 'brackets.json',
+            lang: 'json',
+            difficulty: 'Medium',
+            description: 'Practice right pinky reach for curly braces, square brackets, and parentheses.',
+            text: '{\n  "users": [ { "id": 101, "tags": ["admin", "core"] } ],\n  "config": { "retries": 3, "enabled": true },\n  "flags": [false, true, null]\n}'
+        },
+        {
+            id: 'sym-03',
+            title: 'Arrow Functions & Math Assignment',
+            category: 'symbols',
+            filename: 'math_arrows.ts',
+            lang: 'typescript',
+            difficulty: 'Medium',
+            description: 'Combine arrows `=>`, dereference `->`, and compound operators `+=`, `-=`, `*=`.',
+            text: 'const multiply = (x: number, y: number): number => x * y;\nlet total = 0;\ntotal += 15;\ntotal -= 3;\ntotal *= 2;\nreturn total % 4 === 0;'
+        },
+        {
+            id: 'sym-04',
+            title: 'Template Strings & Interpolations',
+            category: 'symbols',
+            filename: 'strings.js',
+            lang: 'javascript',
+            difficulty: 'Easy',
+            description: 'Master backticks, dollar signs, and curly braces for template literals.',
+            text: 'const msg = `User: ${user.name} (${user.id}) | Score: ${points * 100}%`;\nconsole.log(`[LOG] -> ${timestamp}: ${msg}`);'
+        },
+        {
+            id: 'js-01',
+            title: 'Async / Await API Fetcher',
+            category: 'javascript',
+            filename: 'api_client.ts',
+            lang: 'typescript',
+            difficulty: 'Medium',
+            description: 'Type idiomatic asynchronous JavaScript with error handling and promises.',
+            text: 'async function fetchUserData(endpoint: string) {\n  try {\n    const response = await fetch(endpoint);\n    if (!response.ok) throw new Error("Fetch failed");\n    return await response.json();\n  } catch (err) {\n    console.error(err);\n    return null;\n  }\n}'
+        },
+        {
+            id: 'js-02',
+            title: 'React useState & useEffect Hook',
+            category: 'javascript',
+            filename: 'CounterWidget.tsx',
+            lang: 'typescript',
+            difficulty: 'Medium',
+            description: 'React state hook declaration, effect dependencies, and arrow callbacks.',
+            text: 'const [count, setCount] = useState<number>(0);\n\nuseEffect(() => {\n  const timer = setInterval(() => setCount(c => c + 1), 1000);\n  return () => clearInterval(timer);\n}, []);'
+        },
+        {
+            id: 'js-03',
+            title: 'Array Transform: Filter, Map & Reduce',
+            category: 'javascript',
+            filename: 'transforms.js',
+            lang: 'javascript',
+            difficulty: 'Hard',
+            description: 'Rapid chaining of higher-order array methods and inline arrow functions.',
+            text: 'const activeRevenue = orders\n  .filter(o => o.status === "completed" && o.amount > 0)\n  .map(o => ({ id: o.id, net: o.amount * 0.9 }))\n  .reduce((acc, curr) => acc + curr.net, 0);'
+        },
+        {
+            id: 'js-04',
+            title: 'TypeScript Interface & Generic Types',
+            category: 'javascript',
+            filename: 'types.ts',
+            lang: 'typescript',
+            difficulty: 'Medium',
+            description: 'Angle brackets `<T>`, optional properties `?:`, and union types `|`.',
+            text: 'export interface ApiResponse<T> {\n  status: "success" | "error";\n  data?: T;\n  statusCode: number;\n  timestamp: string;\n}'
+        },
+        {
+            id: 'py-01',
+            title: 'List Comprehensions & Filtering',
+            category: 'python',
+            filename: 'comprehensions.py',
+            lang: 'python',
+            difficulty: 'Easy',
+            description: 'Pythonic list, set, and dict comprehension syntax with colons and conditionals.',
+            text: 'numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]\neven_squares = [x**2 for x in numbers if x % 2 == 0]\nname_len = {name: len(name) for name in ["Alice", "Bob", "Charlie"]}'
+        },
+        {
+            id: 'py-02',
+            title: 'Function Decorators & Type Hints',
+            category: 'python',
+            filename: 'service.py',
+            lang: 'python',
+            difficulty: 'Medium',
+            description: 'At-symbol `@` decorators, `self.`, type hints `->`, and f-strings.',
+            text: 'class UserService:\n    def __init__(self, db_conn: str) -> None:\n        self._conn = db_conn\n\n    @property\n    def is_connected(self) -> bool:\n        return self._conn is not None'
+        },
+        {
+            id: 'py-03',
+            title: 'Dictionary Iteration & Exception Handling',
+            category: 'python',
+            filename: 'processor.py',
+            lang: 'python',
+            difficulty: 'Medium',
+            description: '`try/except/finally` blocks and dictionary unpacking in Python.',
+            text: 'def parse_config(raw_data: dict) -> dict:\n    try:\n        return {k.strip(): v for k, v in raw_data.items() if v}\n    except AttributeError as err:\n        print(f"[Error] Invalid dict structure: {err}")\n        return {}'
+        },
+        {
+            id: 'cpp-01',
+            title: 'C++ Vector & Stream Output',
+            category: 'cpp_java',
+            filename: 'main.cpp',
+            lang: 'cpp',
+            difficulty: 'Medium',
+            description: 'Scope resolution `::`, stream insertion `<<`, references `&`, and templates.',
+            text: '#include <iostream>\n#include <vector>\n\nint main() {\n    std::vector<int> scores = {95, 88, 72, 100};\n    for (const auto& s : scores) {\n        std::cout << "Score: " << s << std::endl;\n    }\n    return 0;\n}'
+        },
+        {
+            id: 'java-01',
+            title: 'Java Stream Pipeline & Method Ref',
+            category: 'cpp_java',
+            filename: 'UserController.java',
+            lang: 'java',
+            difficulty: 'Hard',
+            description: 'Java method references `::`, generics `<String>`, and Stream terminal operators.',
+            text: 'public List<String> getActiveUserNames(List<User> users) {\n    return users.stream()\n        .filter(User::isActive)\n        .map(User::getUsername)\n        .sorted()\n        .collect(Collectors.toList());\n}'
+        },
+        {
+            id: 'html-01',
+            title: 'HTML5 Semantic UI Component',
+            category: 'html_css',
+            filename: 'card.html',
+            lang: 'html',
+            difficulty: 'Easy',
+            description: 'HTML tags `<>`, closing tags `</>`, quotes `""`, and element attributes.',
+            text: '<section class="hero-card" id="main-banner">\n  <header class="card-header">\n    <h2 class="title">Developer Dojo</h2>\n  </header>\n  <button type="submit" class="btn btn-primary" disabled>Start Drill</button>\n</section>'
+        },
+        {
+            id: 'css-01',
+            title: 'CSS Flexbox & CSS Variables',
+            category: 'html_css',
+            filename: 'layout.css',
+            lang: 'css',
+            difficulty: 'Medium',
+            description: 'Curly braces, colons, semicolons, dashes `--var`, and CSS units `rem/px/vw`.',
+            text: '.container {\n  display: flex;\n  flex-direction: row;\n  justify-content: space-between;\n  align-items: center;\n  gap: 1.5rem;\n  background: var(--bg-surface);\n  border: 1px solid rgba(255, 255, 255, 0.1);\n}'
+        },
+        {
+            id: 'sql-01',
+            title: 'SQL Join & Aggregate Grouping',
+            category: 'sql',
+            filename: 'report.sql',
+            lang: 'sql',
+            difficulty: 'Medium',
+            description: 'Uppercase SQL keywords, aliases, aggregations `COUNT/SUM`, and `HAVING`.',
+            text: 'SELECT u.id, u.username, COUNT(o.id) AS total_orders, SUM(o.amount) AS total_spent\nFROM users u\nINNER JOIN orders o ON u.id = o.user_id\nWHERE o.status = "PAID"\nGROUP BY u.id, u.username\nHAVING COUNT(o.id) >= 3\nORDER BY total_spent DESC\nLIMIT 20;'
+        },
+        {
+            id: 'sql-02',
+            title: 'SQL Window Functions & Partition',
+            category: 'sql',
+            filename: 'analytics.sql',
+            lang: 'sql',
+            difficulty: 'Hard',
+            description: 'Analytical window functions `ROW_NUMBER()`, `PARTITION BY`, and nested clauses.',
+            text: 'SELECT emp_id, department, salary,\n  ROW_NUMBER() OVER (PARTITION BY department ORDER BY salary DESC) AS rank_in_dept,\n  AVG(salary) OVER (PARTITION BY department) AS dept_avg\nFROM employee_salaries;'
+        },
+        {
+            id: 'term-01',
+            title: 'Git Branch, Add & Semantic Commit',
+            category: 'terminal',
+            filename: 'bash_git.sh',
+            lang: 'bash',
+            difficulty: 'Easy',
+            description: 'Double dashes `--`, quotes, pipes, and standard Git branch commands.',
+            text: 'git checkout -b feature/auth-middleware\ngit add src/auth/ token.ts\ngit commit -m "feat(auth): add jwt validation guard"\ngit push origin feature/auth-middleware'
+        },
+        {
+            id: 'term-02',
+            title: 'Docker Run & Environment Flags',
+            category: 'terminal',
+            filename: 'deploy.sh',
+            lang: 'bash',
+            difficulty: 'Medium',
+            description: 'Flags `-d`, `-p`, `--name`, environment flags `-e`, and container image tags.',
+            text: 'docker run -d --name redis-cache -p 6379:6379 -v redis_data:/data redis:7.0-alpine\ndocker logs -f --tail 50 redis-cache'
+        },
+        {
+            id: 'case-01',
+            title: 'camelCase Variable Sprint',
+            category: 'casing',
+            filename: 'camel_case.js',
+            lang: 'javascript',
+            difficulty: 'Easy',
+            description: 'Train fast Shift tapping within variable names without losing typing cadence.',
+            text: 'const handleUserLoginSubmit = (authResponsePayload) => {\n  const isSessionTokenValid = validateAuthToken(authResponsePayload);\n  if (isSessionTokenValid) navigateToUserProfile();\n};'
+        },
+        {
+            id: 'case-02',
+            title: 'PascalCase & SCREAMING_SNAKE Constants',
+            category: 'casing',
+            filename: 'constants.ts',
+            lang: 'typescript',
+            difficulty: 'Medium',
+            description: 'Shift coordination for PascalCase class names and all-caps underscore constants.',
+            text: 'export const MAX_CONNECTION_POOL_SIZE = 50;\nexport const DEFAULT_REQUEST_TIMEOUT_MS = 3000;\n\nexport class DatabaseConnectionFactory {\n  public static createDefaultInstance(): ConnectionPoolManager {\n    return new ConnectionPoolManager(MAX_CONNECTION_POOL_SIZE);\n  }\n}'
+        },
+        {
+            id: 'case-03',
+            title: 'snake_case & kebab-case Sprint',
+            category: 'casing',
+            filename: 'naming_styles.py',
+            lang: 'python',
+            difficulty: 'Easy',
+            description: 'Rapid underscore `_` and hyphen `-` usage with right pinky.',
+            text: 'user_first_name = "Alex"\nuser_account_balance = 1450.75\nis_verified_account = True\ncss_class_selector = "btn-secondary-outline--active"'
+        }
     ];
 
     // 3. SOUND SYNTHESIZER
@@ -865,6 +1121,7 @@
             this.container = containerElement;
             this.hintBanner = hintBannerElement;
             this.activeFingerId = null;
+            this.activeShiftFingerId = null;
             this.fingerNodes = new Map();
             this.render();
         }
@@ -972,6 +1229,12 @@
             if (this.activeFingerId) {
                 const prevEl = this.fingerNodes.get(this.activeFingerId);
                 if (prevEl) prevEl.classList.remove('active-finger', 'pulse-glow');
+                this.activeFingerId = null;
+            }
+            if (this.activeShiftFingerId) {
+                const prevShiftEl = this.fingerNodes.get(this.activeShiftFingerId);
+                if (prevShiftEl) prevShiftEl.classList.remove('active-shift-finger', 'pulse-glow');
+                this.activeShiftFingerId = null;
             }
 
             if (!char) {
@@ -988,32 +1251,65 @@
                 targetEl.classList.add('active-finger', 'pulse-glow');
             }
 
+            // Check if Shift is required
+            const shiftReq = getShiftRequirement(char);
+            if (shiftReq && shiftReq.shiftFinger) {
+                this.activeShiftFingerId = shiftReq.shiftFinger.id;
+                const shiftFingerEl = this.fingerNodes.get(shiftReq.shiftFinger.id);
+                if (shiftFingerEl) {
+                    shiftFingerEl.classList.add('active-shift-finger', 'pulse-glow');
+                }
+            }
+
             if (this.hintBanner) {
-                const displayChar = char === ' ' ? 'SPACEBAR' : char;
+                let displayChar = char;
+                if (char === ' ') displayChar = 'SPACEBAR';
+                else if (char === '\n') displayChar = 'ENTER ↵';
+
                 const reachDesc = this.getReachDescription(char, finger);
-                this.hintBanner.innerHTML = `
-                    <div class="finger-instruction-badge" style="border-color: ${finger.color}">
-                        <span class="finger-dot" style="background: ${finger.color}"></span>
-                        <span class="finger-name-label" style="color: ${finger.color}">${finger.name}</span>
-                        <span class="finger-arrow-sep">➔</span>
-                        <span class="finger-target-key">Press <strong class="key-badge">${displayChar}</strong></span>
-                        <span class="finger-reach-info">${reachDesc}</span>
-                    </div>
-                `;
+
+                if (shiftReq && shiftReq.shiftFinger) {
+                    this.hintBanner.innerHTML = `
+                        <div class="finger-instruction-badge" style="border-color: ${finger.color}">
+                            <span class="finger-dot" style="background: ${shiftReq.shiftFinger.color}"></span>
+                            <span class="finger-name-label" style="color: ${shiftReq.shiftFinger.color}">Hold ${shiftReq.shiftFinger.name} (Shift)</span>
+                            <span class="finger-arrow-sep">+</span>
+                            <span class="finger-dot" style="background: ${finger.color}"></span>
+                            <span class="finger-name-label" style="color: ${finger.color}">${finger.name}</span>
+                            <span class="finger-arrow-sep">➔</span>
+                            <span class="finger-target-key">Type <strong class="key-badge">${displayChar}</strong></span>
+                            <span class="finger-reach-info">${reachDesc}</span>
+                        </div>
+                    `;
+                } else {
+                    this.hintBanner.innerHTML = `
+                        <div class="finger-instruction-badge" style="border-color: ${finger.color}">
+                            <span class="finger-dot" style="background: ${finger.color}"></span>
+                            <span class="finger-name-label" style="color: ${finger.color}">${finger.name}</span>
+                            <span class="finger-arrow-sep">➔</span>
+                            <span class="finger-target-key">Press <strong class="key-badge">${displayChar}</strong></span>
+                            <span class="finger-reach-info">${reachDesc}</span>
+                        </div>
+                    `;
+                }
             }
         }
 
         getReachDescription(char, finger) {
             if (char === ' ') return '(Resting position on Spacebar)';
+            if (char === '\n') return '(Right Pinky reaches to Enter ↵)';
             const home = finger.homeKey;
             if (char.toLowerCase() === home.toLowerCase()) {
                 return '(Home row anchor position)';
             }
-            const topRow = 'qwertyuiop1234567890';
-            const bottomRow = 'zxcvbnm,./';
+            const topRow = 'qwertyuiop1234567890~!@#$%^&*()';
+            const bottomRow = 'zxcvbnm,./<>?';
+            const bracketPinky = '{}[];:\'"\\|-_=+';
+
             const lower = char.toLowerCase();
-            if (topRow.includes(lower)) return '(Reach UP from home row)';
-            if (bottomRow.includes(lower)) return '(Reach DOWN from home row)';
+            if (bracketPinky.includes(char)) return '(Pinky stretch on bracket/symbol row)';
+            if (topRow.includes(lower) || topRow.includes(char)) return '(Reach UP from home row)';
+            if (bottomRow.includes(lower) || bottomRow.includes(char)) return '(Reach DOWN from home row)';
             if (lower === 'g' || lower === 'h') return '(Reach INWARD horizontally)';
             return '(Reach from home anchor)';
         }
@@ -1180,7 +1476,7 @@
 
         loadText(text) {
             this.reset();
-            this.targetText = text.trim();
+            this.targetText = (text || '').replace(/\r\n/g, '\n').trim();
             this.charStates = new Array(this.targetText.length).fill('pending');
             this.callbacks.onCharChange(this.getCurrentChar(), this.getCurrentFinger());
             this.updateStats();
@@ -1243,11 +1539,12 @@
             if (!targetChar) return false;
 
             const targetFinger = getFingerForKey(targetChar);
-            const isSpace = targetChar === ' ';
+            const isSpace = targetChar === ' ' || targetChar === '\n';
+            const isMatch = (pressedKey === targetChar) || (targetChar === '\n' && (pressedKey === 'Enter' || pressedKey === '\n'));
 
             this.totalKeystrokes++;
 
-            if (pressedKey === targetChar) {
+            if (isMatch) {
                 this.charStates[this.currentIndex] = 'correct';
                 this.correctKeystrokes++;
                 this.currentStreak++;
@@ -1755,7 +2052,7 @@
     // 11. MAIN APP CLASS
     class FingerFlowApp {
         constructor() {
-            this.currentMode = 'academy';
+            this.currentMode = 'academy'; // 'academy', 'shorthand', 'coder', 'arcade', 'speedtest', 'diagnostics'
             this.keyboardUI = null;
             this.handsUI = null;
             this.typingEngine = null;
@@ -1764,6 +2061,8 @@
             this.speedTestTimer = null;
             this.currentShorthandCategory = 'all';
             this.currentShorthandIndex = 0;
+            this.currentCoderCategory = 'all';
+            this.currentCoderIndex = 0;
         }
 
         init() {
@@ -1837,7 +2136,6 @@
                 }
             };
 
-            // Default to light theme
             const savedTheme = localStorage.getItem('fingerflow_theme') || 'light';
             applyTheme(savedTheme);
 
@@ -1878,6 +2176,10 @@
                         this.loadCurrentAcademyLesson();
                     } else if (this.currentMode === 'speedtest') {
                         this.startSpeedTest();
+                    } else if (this.currentMode === 'shorthand') {
+                        this.loadShorthandDrill(this.currentShorthandIndex);
+                    } else if (this.currentMode === 'coder') {
+                        this.loadCoderDrill(this.currentCoderIndex);
                     }
                 });
             }
@@ -1898,6 +2200,22 @@
                 shorthandNextBtn.addEventListener('click', () => this.nextShorthandDrill());
             }
 
+            // Coder Control Buttons
+            const coderRandBtn = document.getElementById('btn-coder-random');
+            if (coderRandBtn) {
+                coderRandBtn.addEventListener('click', () => this.startRandomCoder());
+            }
+
+            const coderResetBtn = document.getElementById('btn-coder-reset');
+            if (coderResetBtn) {
+                coderResetBtn.addEventListener('click', () => this.loadCoderDrill(this.currentCoderIndex));
+            }
+
+            const coderNextBtn = document.getElementById('btn-coder-next');
+            if (coderNextBtn) {
+                coderNextBtn.addEventListener('click', () => this.nextCoderDrill());
+            }
+
             const arcadeStartBtn = document.getElementById('btn-start-arcade');
             if (arcadeStartBtn) {
                 arcadeStartBtn.addEventListener('click', () => {
@@ -1910,12 +2228,18 @@
             if (modalNextBtn) {
                 modalNextBtn.addEventListener('click', () => {
                     document.getElementById('completion-modal').classList.remove('is-open');
-                    const next = academy.nextLesson();
-                    if (next) {
-                        this.renderAcademyCurriculum();
-                        this.loadCurrentAcademyLesson();
+                    if (this.currentMode === 'shorthand') {
+                        this.nextShorthandDrill();
+                    } else if (this.currentMode === 'coder') {
+                        this.nextCoderDrill();
                     } else {
-                        this.loadCurrentAcademyLesson();
+                        const next = academy.nextLesson();
+                        if (next) {
+                            this.renderAcademyCurriculum();
+                            this.loadCurrentAcademyLesson();
+                        } else {
+                            this.loadCurrentAcademyLesson();
+                        }
                     }
                 });
             }
@@ -1924,7 +2248,13 @@
             if (modalRetryBtn) {
                 modalRetryBtn.addEventListener('click', () => {
                     document.getElementById('completion-modal').classList.remove('is-open');
-                    this.loadCurrentAcademyLesson();
+                    if (this.currentMode === 'shorthand') {
+                        this.loadShorthandDrill(this.currentShorthandIndex);
+                    } else if (this.currentMode === 'coder') {
+                        this.loadCoderDrill(this.currentCoderIndex);
+                    } else {
+                        this.loadCurrentAcademyLesson();
+                    }
                 });
             }
 
@@ -1968,17 +2298,16 @@
         }
 
         handleGlobalKeyDown(e) {
-            // Unlock audio context on any key press
             sounds.init();
 
-            if (e.code === 'Space' || e.code === 'Tab') {
+            if (e.code === 'Space' || e.code === 'Tab' || (e.code === 'Enter' && this.currentMode === 'coder')) {
                 if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
                     e.preventDefault();
                 }
             }
 
-            if (this.currentMode === 'academy' || this.currentMode === 'speedtest' || this.currentMode === 'shorthand') {
-                if (e.key.length === 1) {
+            if (this.currentMode === 'academy' || this.currentMode === 'speedtest' || this.currentMode === 'shorthand' || this.currentMode === 'coder') {
+                if (e.key.length === 1 || e.key === 'Enter') {
                     this.typingEngine.handleKeyInput(e.key, e);
                 }
             } else if (this.currentMode === 'arcade') {
@@ -2012,6 +2341,9 @@
             } else if (mode === 'shorthand') {
                 this.renderShorthandLab();
                 this.loadShorthandDrill(this.currentShorthandIndex);
+            } else if (mode === 'coder') {
+                this.renderCoderLab();
+                this.loadCoderDrill(this.currentCoderIndex);
             } else if (mode === 'arcade') {
                 document.getElementById('arcade-overlay').style.display = 'flex';
             } else if (mode === 'diagnostics') {
@@ -2093,6 +2425,11 @@
         }
 
         updateTextDisplay() {
+            if (this.currentMode === 'coder') {
+                this.updateCoderDisplay();
+                return;
+            }
+
             const containers = [
                 document.getElementById('typing-text-display'),
                 document.getElementById('typing-text-display-speed'),
@@ -2132,6 +2469,102 @@
             });
         }
 
+        updateCoderDisplay() {
+            const codeArea = document.getElementById('typing-text-display-coder');
+            const gutter = document.getElementById('coder-line-gutter');
+            if (!codeArea || !gutter) return;
+
+            const text = this.typingEngine.targetText;
+            const currIdx = this.typingEngine.currentIndex;
+            const charStates = this.typingEngine.charStates;
+
+            const lines = text.split('\n');
+            let runningCharCount = 0;
+            let activeLineIdx = 0;
+
+            for (let l = 0; l < lines.length; l++) {
+                const lineLen = lines[l].length + 1;
+                if (currIdx >= runningCharCount && currIdx < runningCharCount + lineLen) {
+                    activeLineIdx = l;
+                    break;
+                }
+                if (l === lines.length - 1 && currIdx >= runningCharCount) {
+                    activeLineIdx = l;
+                }
+                runningCharCount += lineLen;
+            }
+
+            let gutterHtml = '';
+            for (let l = 0; l < lines.length; l++) {
+                const isActiveLine = l === activeLineIdx;
+                gutterHtml += `<div class="coder-gutter-line ${isActiveLine ? 'is-active-line' : ''}">${l + 1}</div>`;
+            }
+            gutter.innerHTML = gutterHtml;
+
+            let codeHtml = '';
+            let charIndex = 0;
+
+            for (let l = 0; l < lines.length; l++) {
+                const lineText = lines[l];
+                const isActiveLine = l === activeLineIdx;
+                let lineCharsHtml = '';
+
+                for (let c = 0; c < lineText.length; c++) {
+                    const char = lineText[c];
+                    const state = charStates[charIndex];
+                    let charClass = 'char-pending';
+
+                    if (charIndex === currIdx) {
+                        charClass = 'char-current';
+                    } else if (state === 'correct') {
+                        charClass = 'char-correct';
+                    } else if (state === 'error') {
+                        charClass = 'char-incorrect';
+                    }
+
+                    const tokenClass = this.getCoderTokenClass(char);
+                    const displayChar = char === ' ' ? '&nbsp;' : this.escapeHtml(char);
+                    lineCharsHtml += `<span class="type-char ${charClass} ${charClass === 'char-pending' ? tokenClass : ''}">${displayChar}</span>`;
+                    charIndex++;
+                }
+
+                if (l < lines.length - 1) {
+                    const state = charStates[charIndex];
+                    let charClass = 'char-pending';
+                    if (charIndex === currIdx) {
+                        charClass = 'char-current';
+                    } else if (state === 'correct') {
+                        charClass = 'char-correct';
+                    } else if (state === 'error') {
+                        charClass = 'char-incorrect';
+                    }
+                    lineCharsHtml += `<span class="type-char char-newline ${charClass}" title="Press Enter ↵">↵</span>`;
+                    charIndex++;
+                }
+
+                codeHtml += `<div class="ide-code-line ${isActiveLine ? 'is-active-line' : ''}">${lineCharsHtml}</div>`;
+            }
+
+            codeArea.innerHTML = codeHtml;
+
+            const activeLineEl = codeArea.querySelector('.ide-code-line.is-active-line');
+            if (activeLineEl) {
+                activeLineEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        getCoderTokenClass(char) {
+            if ('{}[]()'.includes(char)) return 'token-sym';
+            if ('=+-*/%<>!&|^~?:'.includes(char)) return 'token-op';
+            if ('0123456789'.includes(char)) return 'token-num';
+            if ("'\"`".includes(char)) return 'token-str';
+            return '';
+        }
+
+        escapeHtml(str) {
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
         updateHUDStats(stats) {
             const wpmEl = document.getElementById('stat-wpm');
             const accEl = document.getElementById('stat-accuracy');
@@ -2162,6 +2595,33 @@
 
                 if (modalStars) {
                     const starsCount = stats.accuracy >= 98 && stats.wpm >= 50 ? 3 : stats.accuracy >= 90 ? 2 : 1;
+                    let starsHtml = '';
+                    for (let s = 1; s <= 3; s++) {
+                        starsHtml += `<span class="modal-star ${s <= starsCount ? 'star-gold animate-pop' : 'star-dim'}">★</span>`;
+                    }
+                    modalStars.innerHTML = starsHtml;
+                }
+
+                if (modal) modal.classList.add('is-open');
+                return;
+            }
+
+            if (this.currentMode === 'coder') {
+                const modal = document.getElementById('completion-modal');
+                const modalStars = document.getElementById('modal-stars');
+                const modalWpm = document.getElementById('modal-wpm');
+                const modalAcc = document.getElementById('modal-acc');
+                const modalStreak = document.getElementById('modal-streak');
+
+                if (modalWpm) modalWpm.textContent = `${stats.wpm} WPM`;
+                if (modalAcc) modalAcc.textContent = `${stats.accuracy}%`;
+                if (modalStreak) modalStreak.textContent = stats.streak;
+
+                if (modalStars) {
+                    let starsCount = 1;
+                    if (stats.wpm >= 35 && stats.accuracy >= 95) starsCount = 3;
+                    else if (stats.wpm >= 20 && stats.accuracy >= 88) starsCount = 2;
+
                     let starsHtml = '';
                     for (let s = 1; s <= 3; s++) {
                         starsHtml += `<span class="modal-star ${s <= starsCount ? 'star-gold animate-pop' : 'star-dim'}">★</span>`;
@@ -2289,6 +2749,112 @@
         nextShorthandDrill() {
             const nextIdx = (this.currentShorthandIndex + 1) % SHORTHAND_DICTIONARY.length;
             this.loadShorthandDrill(nextIdx);
+        }
+
+        renderCoderLab() {
+            const catBar = document.getElementById('coder-categories-bar');
+            if (catBar) {
+                catBar.innerHTML = '';
+                CODER_CATEGORIES.forEach(cat => {
+                    const pill = document.createElement('button');
+                    pill.className = `coder-cat-pill ${cat.id === this.currentCoderCategory ? 'active' : ''}`;
+                    pill.innerHTML = `<span>${cat.icon}</span> ${cat.name}`;
+                    pill.addEventListener('click', () => {
+                        this.currentCoderCategory = cat.id;
+                        this.renderCoderLab();
+                    });
+                    catBar.appendChild(pill);
+                });
+            }
+
+            this.renderCoderGrid();
+        }
+
+        renderCoderGrid() {
+            const grid = document.getElementById('coder-snippets-grid');
+            if (!grid) return;
+
+            grid.innerHTML = '';
+            const filtered = CODER_SNIPPETS.map((s, idx) => ({ ...s, originalIdx: idx }))
+                .filter(s => this.currentCoderCategory === 'all' || s.category === this.currentCoderCategory);
+
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                const isActive = item.originalIdx === this.currentCoderIndex;
+                card.className = `coder-snippet-card ${isActive ? 'is-active-drill' : ''}`;
+                card.id = `coder-card-${item.originalIdx}`;
+
+                const diffClass = item.difficulty.toLowerCase();
+
+                card.innerHTML = `
+                    <div class="coder-card-top">
+                        <span class="coder-card-filename">${item.filename}</span>
+                        <span class="coder-diff-badge diff-${diffClass}">${item.difficulty}</span>
+                    </div>
+                    <div class="coder-card-title">${item.title}</div>
+                    <div class="coder-card-desc">${item.description}</div>
+                    <pre class="coder-card-preview"><code>${this.escapeHtml(item.text.slice(0, 90))}${item.text.length > 90 ? '...' : ''}</code></pre>
+                    <div class="coder-card-bottom">
+                        <span class="coder-card-lang">${item.lang}</span>
+                        <span class="coder-card-btn">Practice ➔</span>
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    this.loadCoderDrill(item.originalIdx);
+                });
+
+                grid.appendChild(card);
+            });
+        }
+
+        loadCoderDrill(index) {
+            if (index < 0 || index >= CODER_SNIPPETS.length) index = 0;
+            this.currentCoderIndex = index;
+            const item = CODER_SNIPPETS[index];
+            if (!item) return;
+
+            const fileTabName = document.getElementById('coder-file-name');
+            const fileTabLang = document.getElementById('coder-file-lang');
+            const fileTabIcon = document.getElementById('coder-file-icon');
+            const titleEl = document.getElementById('coder-drill-title');
+            const descEl = document.getElementById('coder-drill-desc');
+            const diffBadge = document.getElementById('coder-diff-badge');
+
+            if (fileTabName) fileTabName.textContent = item.filename;
+            if (fileTabLang) fileTabLang.textContent = item.lang.toUpperCase();
+            if (fileTabIcon) {
+                const icons = { javascript: '📜', typescript: '📜', python: '🐍', cpp: '⚡', java: '⚡', html: '🌐', css: '🌐', sql: '🗄️', bash: '🖥️', json: '🔣' };
+                fileTabIcon.textContent = icons[item.lang] || '💻';
+            }
+            if (titleEl) titleEl.textContent = item.title;
+            if (descEl) descEl.textContent = item.description;
+            if (diffBadge) {
+                diffBadge.textContent = item.difficulty;
+                diffBadge.className = `coder-diff-badge diff-${item.difficulty.toLowerCase()}`;
+            }
+
+            this.renderCoderGrid();
+            this.typingEngine.loadText(item.text);
+
+            const card = document.getElementById(`coder-card-${index}`);
+            if (card) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        startRandomCoder() {
+            const filtered = CODER_SNIPPETS.map((s, idx) => ({ ...s, originalIdx: idx }))
+                .filter(s => this.currentCoderCategory === 'all' || s.category === this.currentCoderCategory);
+            if (filtered.length > 0) {
+                const randItem = filtered[Math.floor(Math.random() * filtered.length)];
+                this.loadCoderDrill(randItem.originalIdx);
+            }
+        }
+
+        nextCoderDrill() {
+            const nextIdx = (this.currentCoderIndex + 1) % CODER_SNIPPETS.length;
+            this.loadCoderDrill(nextIdx);
         }
 
         showArcadeGameOver(results) {

@@ -7,11 +7,12 @@ import { academy } from './game/academy_mode.js';
 import { ArcadeManager } from './game/arcade_mode.js';
 import { diagnostics } from './game/diagnostics.js';
 import { LESSON_STAGES, SPEED_TEST_TEXTS, SHORTHAND_CATEGORIES, SHORTHAND_DICTIONARY } from './config/lessons.js';
+import { CODER_CATEGORIES, CODER_SNIPPETS } from './config/coder_lessons.js';
 import { FINGERS } from './config/finger_map.js';
 
 class FingerFlowApp {
     constructor() {
-        this.currentMode = 'academy'; // 'academy', 'shorthand', 'arcade', 'speedtest', 'diagnostics'
+        this.currentMode = 'academy'; // 'academy', 'shorthand', 'coder', 'arcade', 'speedtest', 'diagnostics'
         this.keyboardUI = null;
         this.handsUI = null;
         this.typingEngine = null;
@@ -21,6 +22,8 @@ class FingerFlowApp {
         this.speedTestTimeLeft = 30;
         this.currentShorthandCategory = 'all';
         this.currentShorthandIndex = 0;
+        this.currentCoderCategory = 'all';
+        this.currentCoderIndex = 0;
     }
 
     init() {
@@ -112,6 +115,10 @@ class FingerFlowApp {
                     this.loadCurrentAcademyLesson();
                 } else if (this.currentMode === 'speedtest') {
                     this.startSpeedTest();
+                } else if (this.currentMode === 'shorthand') {
+                    this.loadShorthandDrill(this.currentShorthandIndex);
+                } else if (this.currentMode === 'coder') {
+                    this.loadCoderDrill(this.currentCoderIndex);
                 }
             });
         }
@@ -132,6 +139,22 @@ class FingerFlowApp {
             shorthandNextBtn.addEventListener('click', () => this.nextShorthandDrill());
         }
 
+        // Coder Control Buttons
+        const coderRandBtn = document.getElementById('btn-coder-random');
+        if (coderRandBtn) {
+            coderRandBtn.addEventListener('click', () => this.startRandomCoder());
+        }
+
+        const coderResetBtn = document.getElementById('btn-coder-reset');
+        if (coderResetBtn) {
+            coderResetBtn.addEventListener('click', () => this.loadCoderDrill(this.currentCoderIndex));
+        }
+
+        const coderNextBtn = document.getElementById('btn-coder-next');
+        if (coderNextBtn) {
+            coderNextBtn.addEventListener('click', () => this.nextCoderDrill());
+        }
+
         // Arcade Start Button
         const arcadeStartBtn = document.getElementById('btn-start-arcade');
         if (arcadeStartBtn) {
@@ -146,12 +169,18 @@ class FingerFlowApp {
         if (modalNextBtn) {
             modalNextBtn.addEventListener('click', () => {
                 document.getElementById('completion-modal').classList.remove('is-open');
-                const next = academy.nextLesson();
-                if (next) {
-                    this.renderAcademyCurriculum();
-                    this.loadCurrentAcademyLesson();
+                if (this.currentMode === 'shorthand') {
+                    this.nextShorthandDrill();
+                } else if (this.currentMode === 'coder') {
+                    this.nextCoderDrill();
                 } else {
-                    this.loadCurrentAcademyLesson();
+                    const next = academy.nextLesson();
+                    if (next) {
+                        this.renderAcademyCurriculum();
+                        this.loadCurrentAcademyLesson();
+                    } else {
+                        this.loadCurrentAcademyLesson();
+                    }
                 }
             });
         }
@@ -160,7 +189,13 @@ class FingerFlowApp {
         if (modalRetryBtn) {
             modalRetryBtn.addEventListener('click', () => {
                 document.getElementById('completion-modal').classList.remove('is-open');
-                this.loadCurrentAcademyLesson();
+                if (this.currentMode === 'shorthand') {
+                    this.loadShorthandDrill(this.currentShorthandIndex);
+                } else if (this.currentMode === 'coder') {
+                    this.loadCoderDrill(this.currentCoderIndex);
+                } else {
+                    this.loadCurrentAcademyLesson();
+                }
             });
         }
 
@@ -207,16 +242,16 @@ class FingerFlowApp {
     }
 
     handleGlobalKeyDown(e) {
-        // Prevent scrolling on space or tab
-        if (e.code === 'Space' || e.code === 'Tab') {
+        // Prevent scrolling on space or tab, or Enter in coder mode
+        if (e.code === 'Space' || e.code === 'Tab' || (e.code === 'Enter' && this.currentMode === 'coder')) {
             if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
                 e.preventDefault();
             }
         }
 
         // Pass to active game mode
-        if (this.currentMode === 'academy' || this.currentMode === 'speedtest' || this.currentMode === 'shorthand') {
-            if (e.key.length === 1) {
+        if (this.currentMode === 'academy' || this.currentMode === 'speedtest' || this.currentMode === 'shorthand' || this.currentMode === 'coder') {
+            if (e.key.length === 1 || e.key === 'Enter') {
                 this.typingEngine.handleKeyInput(e.key, e);
             }
         } else if (this.currentMode === 'arcade') {
@@ -254,6 +289,9 @@ class FingerFlowApp {
         } else if (mode === 'shorthand') {
             this.renderShorthandLab();
             this.loadShorthandDrill(this.currentShorthandIndex);
+        } else if (mode === 'coder') {
+            this.renderCoderLab();
+            this.loadCoderDrill(this.currentCoderIndex);
         } else if (mode === 'arcade') {
             document.getElementById('arcade-overlay').style.display = 'flex';
         } else if (mode === 'diagnostics') {
@@ -337,6 +375,11 @@ class FingerFlowApp {
     }
 
     updateTextDisplay() {
+        if (this.currentMode === 'coder') {
+            this.updateCoderDisplay();
+            return;
+        }
+
         const containers = [
             document.getElementById('typing-text-display'),
             document.getElementById('typing-text-display-speed'),
@@ -376,6 +419,107 @@ class FingerFlowApp {
         });
     }
 
+    updateCoderDisplay() {
+        const codeArea = document.getElementById('typing-text-display-coder');
+        const gutter = document.getElementById('coder-line-gutter');
+        if (!codeArea || !gutter) return;
+
+        const text = this.typingEngine.targetText;
+        const currIdx = this.typingEngine.currentIndex;
+        const charStates = this.typingEngine.charStates;
+
+        const lines = text.split('\n');
+        let runningCharCount = 0;
+        let activeLineIdx = 0;
+
+        // Determine which line the cursor is currently on
+        for (let l = 0; l < lines.length; l++) {
+            const lineLen = lines[l].length + 1; // +1 for '\n'
+            if (currIdx >= runningCharCount && currIdx < runningCharCount + lineLen) {
+                activeLineIdx = l;
+                break;
+            }
+            if (l === lines.length - 1 && currIdx >= runningCharCount) {
+                activeLineIdx = l;
+            }
+            runningCharCount += lineLen;
+        }
+
+        // Render Gutter Line Numbers
+        let gutterHtml = '';
+        for (let l = 0; l < lines.length; l++) {
+            const isActiveLine = l === activeLineIdx;
+            gutterHtml += `<div class="coder-gutter-line ${isActiveLine ? 'is-active-line' : ''}">${l + 1}</div>`;
+        }
+        gutter.innerHTML = gutterHtml;
+
+        // Render Code Lines and Characters
+        let codeHtml = '';
+        let charIndex = 0;
+
+        for (let l = 0; l < lines.length; l++) {
+            const lineText = lines[l];
+            const isActiveLine = l === activeLineIdx;
+            let lineCharsHtml = '';
+
+            for (let c = 0; c < lineText.length; c++) {
+                const char = lineText[c];
+                const state = charStates[charIndex];
+                let charClass = 'char-pending';
+
+                if (charIndex === currIdx) {
+                    charClass = 'char-current';
+                } else if (state === 'correct') {
+                    charClass = 'char-correct';
+                } else if (state === 'error') {
+                    charClass = 'char-incorrect';
+                }
+
+                const tokenClass = this.getCoderTokenClass(char);
+                const displayChar = char === ' ' ? '&nbsp;' : this.escapeHtml(char);
+                lineCharsHtml += `<span class="type-char ${charClass} ${charClass === 'char-pending' ? tokenClass : ''}">${displayChar}</span>`;
+                charIndex++;
+            }
+
+            // If not the last line, there is a newline character '\n'
+            if (l < lines.length - 1) {
+                const state = charStates[charIndex];
+                let charClass = 'char-pending';
+                if (charIndex === currIdx) {
+                    charClass = 'char-current';
+                } else if (state === 'correct') {
+                    charClass = 'char-correct';
+                } else if (state === 'error') {
+                    charClass = 'char-incorrect';
+                }
+                lineCharsHtml += `<span class="type-char char-newline ${charClass}" title="Press Enter ↵">↵</span>`;
+                charIndex++; // for '\n'
+            }
+
+            codeHtml += `<div class="ide-code-line ${isActiveLine ? 'is-active-line' : ''}">${lineCharsHtml}</div>`;
+        }
+
+        codeArea.innerHTML = codeHtml;
+
+        // Auto-scroll active line into view
+        const activeLineEl = codeArea.querySelector('.ide-code-line.is-active-line');
+        if (activeLineEl) {
+            activeLineEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    getCoderTokenClass(char) {
+        if ('{}[]()'.includes(char)) return 'token-sym';
+        if ('=+-*/%<>!&|^~?:'.includes(char)) return 'token-op';
+        if ('0123456789'.includes(char)) return 'token-num';
+        if ("'\"`".includes(char)) return 'token-str';
+        return '';
+    }
+
+    escapeHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
     updateHUDStats(stats) {
         const wpmEl = document.getElementById('stat-wpm');
         const accEl = document.getElementById('stat-accuracy');
@@ -394,7 +538,6 @@ class FingerFlowApp {
 
     onLessonCompleted(stats) {
         if (this.currentMode === 'shorthand') {
-            const currentItem = SHORTHAND_DICTIONARY[this.currentShorthandIndex];
             const modal = document.getElementById('completion-modal');
             const modalStars = document.getElementById('modal-stars');
             const modalWpm = document.getElementById('modal-wpm');
@@ -403,13 +546,43 @@ class FingerFlowApp {
 
             if (modalWpm) modalWpm.textContent = `${stats.wpm} WPM`;
             if (modalAcc) modalAcc.textContent = `${stats.accuracy}%`;
-            if (modalStreak) modalStreak.textContent = `${stats.maxStreak}`;
+            if (modalStreak) modalStreak.textContent = stats.streak;
 
             if (modalStars) {
-                const starsCount = stats.accuracy >= 98 && stats.wpm >= 50 ? 3 : stats.accuracy >= 90 ? 2 : 1;
+                let starsCount = 1;
+                if (stats.wpm >= 40 && stats.accuracy >= 94) starsCount = 3;
+                else if (stats.wpm >= 25 && stats.accuracy >= 85) starsCount = 2;
+
                 let starsHtml = '';
                 for (let s = 1; s <= 3; s++) {
-                    starsHtml += `<span class="modal-star ${s <= starsCount ? 'star-gold animate-pop' : 'star-dim'}">★</span>`;
+                    starsHtml += `<span class="star-icon ${s <= starsCount ? 'star-filled' : 'star-empty'}">★</span>`;
+                }
+                modalStars.innerHTML = starsHtml;
+            }
+
+            if (modal) modal.classList.add('is-open');
+            return;
+        }
+
+        if (this.currentMode === 'coder') {
+            const modal = document.getElementById('completion-modal');
+            const modalStars = document.getElementById('modal-stars');
+            const modalWpm = document.getElementById('modal-wpm');
+            const modalAcc = document.getElementById('modal-acc');
+            const modalStreak = document.getElementById('modal-streak');
+
+            if (modalWpm) modalWpm.textContent = `${stats.wpm} WPM`;
+            if (modalAcc) modalAcc.textContent = `${stats.accuracy}%`;
+            if (modalStreak) modalStreak.textContent = stats.streak;
+
+            if (modalStars) {
+                let starsCount = 1;
+                if (stats.wpm >= 35 && stats.accuracy >= 95) starsCount = 3;
+                else if (stats.wpm >= 20 && stats.accuracy >= 88) starsCount = 2;
+
+                let starsHtml = '';
+                for (let s = 1; s <= 3; s++) {
+                    starsHtml += `<span class="star-icon ${s <= starsCount ? 'star-filled' : 'star-empty'}">★</span>`;
                 }
                 modalStars.innerHTML = starsHtml;
             }
@@ -447,22 +620,18 @@ class FingerFlowApp {
     }
 
     renderShorthandLab() {
-        const categoriesBar = document.getElementById('shorthand-categories-bar');
-        const dictGrid = document.getElementById('shorthand-dict-grid');
-
-        if (categoriesBar && categoriesBar.children.length === 0) {
-            categoriesBar.innerHTML = '';
+        const catBar = document.getElementById('shorthand-categories-bar');
+        if (catBar) {
+            catBar.innerHTML = '';
             SHORTHAND_CATEGORIES.forEach(cat => {
-                const btn = document.createElement('button');
-                btn.className = `shorthand-cat-pill ${this.currentShorthandCategory === cat.id ? 'active' : ''}`;
-                btn.innerHTML = `<span>${cat.icon}</span> ${cat.name}`;
-                btn.addEventListener('click', () => {
+                const pill = document.createElement('button');
+                pill.className = `shorthand-cat-pill ${cat.id === this.currentShorthandCategory ? 'active' : ''}`;
+                pill.innerHTML = `<span>${cat.icon}</span> ${cat.name}`;
+                pill.addEventListener('click', () => {
                     this.currentShorthandCategory = cat.id;
-                    categoriesBar.querySelectorAll('.shorthand-cat-pill').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    this.renderShorthandGrid();
+                    this.renderShorthandLab();
                 });
-                categoriesBar.appendChild(btn);
+                catBar.appendChild(pill);
             });
         }
 
@@ -491,7 +660,7 @@ class FingerFlowApp {
                 <div class="shorthand-card-expansion">${item.expansion}</div>
                 <div class="shorthand-card-preview">${item.drill}</div>
                 <div class="shorthand-card-action">
-                    <span>${isActive ? '⚡ Active Drill' : 'Click to drill'}</span>
+                    <span>${isActive ? '🎯 Active Drill' : 'Click to drill'}</span>
                     <span>➔</span>
                 </div>
             `;
@@ -535,6 +704,112 @@ class FingerFlowApp {
     nextShorthandDrill() {
         const nextIdx = (this.currentShorthandIndex + 1) % SHORTHAND_DICTIONARY.length;
         this.loadShorthandDrill(nextIdx);
+    }
+
+    renderCoderLab() {
+        const catBar = document.getElementById('coder-categories-bar');
+        if (catBar) {
+            catBar.innerHTML = '';
+            CODER_CATEGORIES.forEach(cat => {
+                const pill = document.createElement('button');
+                pill.className = `coder-cat-pill ${cat.id === this.currentCoderCategory ? 'active' : ''}`;
+                pill.innerHTML = `<span>${cat.icon}</span> ${cat.name}`;
+                pill.addEventListener('click', () => {
+                    this.currentCoderCategory = cat.id;
+                    this.renderCoderLab();
+                });
+                catBar.appendChild(pill);
+            });
+        }
+
+        this.renderCoderGrid();
+    }
+
+    renderCoderGrid() {
+        const grid = document.getElementById('coder-snippets-grid');
+        if (!grid) return;
+
+        grid.innerHTML = '';
+        const filtered = CODER_SNIPPETS.map((s, idx) => ({ ...s, originalIdx: idx }))
+            .filter(s => this.currentCoderCategory === 'all' || s.category === this.currentCoderCategory);
+
+        filtered.forEach(item => {
+            const card = document.createElement('div');
+            const isActive = item.originalIdx === this.currentCoderIndex;
+            card.className = `coder-snippet-card ${isActive ? 'is-active-drill' : ''}`;
+            card.id = `coder-card-${item.originalIdx}`;
+
+            const diffClass = item.difficulty.toLowerCase();
+
+            card.innerHTML = `
+                <div class="coder-card-top">
+                    <span class="coder-card-filename">${item.filename}</span>
+                    <span class="coder-diff-badge diff-${diffClass}">${item.difficulty}</span>
+                </div>
+                <div class="coder-card-title">${item.title}</div>
+                <div class="coder-card-desc">${item.description}</div>
+                <pre class="coder-card-preview"><code>${this.escapeHtml(item.text.slice(0, 90))}${item.text.length > 90 ? '...' : ''}</code></pre>
+                <div class="coder-card-bottom">
+                    <span class="coder-card-lang">${item.lang}</span>
+                    <span class="coder-card-btn">Practice ➔</span>
+                </div>
+            `;
+
+            card.addEventListener('click', () => {
+                this.loadCoderDrill(item.originalIdx);
+            });
+
+            grid.appendChild(card);
+        });
+    }
+
+    loadCoderDrill(index) {
+        if (index < 0 || index >= CODER_SNIPPETS.length) index = 0;
+        this.currentCoderIndex = index;
+        const item = CODER_SNIPPETS[index];
+        if (!item) return;
+
+        const fileTabName = document.getElementById('coder-file-name');
+        const fileTabLang = document.getElementById('coder-file-lang');
+        const fileTabIcon = document.getElementById('coder-file-icon');
+        const titleEl = document.getElementById('coder-drill-title');
+        const descEl = document.getElementById('coder-drill-desc');
+        const diffBadge = document.getElementById('coder-diff-badge');
+
+        if (fileTabName) fileTabName.textContent = item.filename;
+        if (fileTabLang) fileTabLang.textContent = item.lang.toUpperCase();
+        if (fileTabIcon) {
+            const icons = { javascript: '📜', typescript: '📜', python: '🐍', cpp: '⚡', java: '⚡', html: '🌐', css: '🌐', sql: '🗄️', bash: '🖥️', json: '🔣' };
+            fileTabIcon.textContent = icons[item.lang] || '💻';
+        }
+        if (titleEl) titleEl.textContent = item.title;
+        if (descEl) descEl.textContent = item.description;
+        if (diffBadge) {
+            diffBadge.textContent = item.difficulty;
+            diffBadge.className = `coder-diff-badge diff-${item.difficulty.toLowerCase()}`;
+        }
+
+        this.renderCoderGrid();
+        this.typingEngine.loadText(item.text);
+
+        const card = document.getElementById(`coder-card-${index}`);
+        if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+
+    startRandomCoder() {
+        const filtered = CODER_SNIPPETS.map((s, idx) => ({ ...s, originalIdx: idx }))
+            .filter(s => this.currentCoderCategory === 'all' || s.category === this.currentCoderCategory);
+        if (filtered.length > 0) {
+            const randItem = filtered[Math.floor(Math.random() * filtered.length)];
+            this.loadCoderDrill(randItem.originalIdx);
+        }
+    }
+
+    nextCoderDrill() {
+        const nextIdx = (this.currentCoderIndex + 1) % CODER_SNIPPETS.length;
+        this.loadCoderDrill(nextIdx);
     }
 
     showArcadeGameOver(results) {

@@ -36,6 +36,9 @@
             <button class="nav-tab" data-mode="shorthand" id="nav-shorthand">
                 <span>✍️</span> Shorthand Lab
             </button>
+            <button class="nav-tab" data-mode="coder" id="nav-coder">
+                <span>💻</span> Coder Dojo
+            </button>
             <button class="nav-tab" data-mode="arcade" id="nav-arcade">
                 <span>☄️</span> Meteor Blitz
             </button>
@@ -154,6 +157,67 @@
                     <div class="shorthand-category-pills" id="shorthand-categories-bar"></div>
                 </div>
                 <div class="shorthand-dictionary-grid" id="shorthand-dict-grid"></div>
+            </div>
+        </div>
+
+        <!-- ==============================================
+             MODE: CODER DOJO (PROGRAMMER CODE TYPING)
+             ============================================== -->
+        <div class="mode-view" id="view-coder" style="display: none;">
+            <div class="typing-arena-card coder-arena-card">
+                <!-- IDE Top Bar with Mac window controls, active file tab, and action buttons -->
+                <div class="coder-ide-header">
+                    <div class="ide-controls-group">
+                        <span class="ide-dot ide-dot-red"></span>
+                        <span class="ide-dot ide-dot-yellow"></span>
+                        <span class="ide-dot ide-dot-green"></span>
+                    </div>
+                    <div class="ide-tabs-wrapper">
+                        <div class="ide-tab is-active" id="coder-active-file-tab">
+                            <span class="ide-tab-icon" id="coder-file-icon">⚡</span>
+                            <span class="ide-tab-name" id="coder-file-name">operators.js</span>
+                            <span class="ide-tab-lang-badge" id="coder-file-lang">JavaScript</span>
+                        </div>
+                    </div>
+                    <div class="coder-header-actions">
+                        <button class="btn btn-secondary" id="btn-coder-random" title="Random Code Drill">🎲 Random</button>
+                        <button class="btn btn-secondary" id="btn-coder-reset" title="Restart Current Drill">↺ Reset</button>
+                        <button class="btn btn-primary" id="btn-coder-next" title="Next Code Drill">Next Snippet ➔</button>
+                    </div>
+                </div>
+
+                <!-- Coder Info Bar: Drill Title, Description, and Difficulty -->
+                <div class="coder-info-bar">
+                    <div class="coder-info-left">
+                        <span class="coder-drill-heading" id="coder-drill-title">Equality, Logic & Nullish Operators</span>
+                        <span class="coder-drill-desc" id="coder-drill-desc">Build fast muscle memory for triple equals, logic chords, and nullish coalescing.</span>
+                    </div>
+                    <div class="coder-info-right">
+                        <span class="coder-diff-badge" id="coder-diff-badge">Easy</span>
+                    </div>
+                </div>
+
+                <!-- IDE Editor Arena with Line Numbers Gutter and Code Output -->
+                <div class="coder-editor-window">
+                    <div class="coder-gutter" id="coder-line-gutter">
+                        <!-- Line numbers (1, 2, 3...) -->
+                    </div>
+                    <div class="coder-code-area" id="typing-text-display-coder">
+                        <!-- Multi-line character tokens with syntax highlighting -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coder Snippet Explorer / Curriculum Section -->
+            <div class="coder-lab-section">
+                <div class="coder-lab-header">
+                    <div class="coder-lab-title">
+                        <span>💻</span> Developer Snippet Library
+                    </div>
+                    <!-- Category Filter Pills -->
+                    <div class="coder-category-pills" id="coder-categories-bar"></div>
+                </div>
+                <div class="coder-snippets-grid" id="coder-snippets-grid"></div>
             </div>
         </div>
 

@@ -105,6 +105,26 @@
     font-weight: 800;
 }
 
+.finger-group.active-shift-finger {
+    transform: translateY(-5px) scale(1.03);
+}
+
+.finger-group.active-shift-finger .finger-stem {
+    fill: rgba(155, 93, 229, 0.3);
+    stroke: #9b5de5;
+    stroke-width: 2;
+    stroke-dasharray: 4 2;
+}
+
+.finger-group.active-shift-finger .finger-tip {
+    filter: drop-shadow(0 0 10px #9b5de5);
+}
+
+.finger-group.active-shift-finger .finger-id-tag {
+    fill: #9b5de5;
+    font-weight: 800;
+}
+
 @keyframes fingerPulse {
     0% { transform: translateY(-8px) scale(1.06); }
     50% { transform: translateY(-12px) scale(1.1); }
@@ -114,3 +134,4 @@
 .finger-group.pulse-glow {
     animation: fingerPulse 1s infinite ease-in-out;
 }
+
